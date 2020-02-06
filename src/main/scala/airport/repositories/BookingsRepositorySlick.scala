@@ -4,31 +4,32 @@ import java.sql.Date
 
 import airport.database.AirportDatabase.db
 import airport.model.BookingStatus.BookingStatus
-import airport.model.{Booking, BookingId, FlightId, PassengerId}
-import airport.repositories.BookingsRepositoryImpl.bookings
-import airport.repositories.FlightsRepositoryImpl.flights
-import airport.repositories.PassengersRepositoryImpl.passengers
+import airport.model.database.BookingRow
+import airport.model.{BookingId, FlightId, PassengerId, database}
+import airport.repositories.BookingsRepositorySlick.bookings
+import airport.repositories.FlightsRepositorySlick.flights
+import airport.repositories.PassengersRepositorySlick.passengers
 import slick.jdbc.PostgresProfile.api._
 
 import scala.concurrent.Future
 
-class BookingsRepositoryImpl extends BookingsRepository {
-  def getById(id: BookingId): Future[Option[Booking]] = db.run{
+class BookingsRepositorySlick extends BookingsRepository {
+  def getById(id: BookingId): Future[Option[BookingRow]] = db.run{
     bookings.filter(_.id === id).result.headOption
   }
 
-  def getAll: Future[Seq[Booking]] = db.run{
+  def getAll: Future[Seq[BookingRow]] = db.run{
     bookings.result
   }
 
-  def create(bookedBy: PassengerId, status: BookingStatus, bookedAt: Date, flight: FlightId): Future[Booking] = db.run {
+  def create(bookedBy: PassengerId, status: BookingStatus, bookedAt: Date, flight: FlightId): Future[BookingRow] = db.run {
     (bookings.map(b => (b.bookedBy, b.status, b.bookedAt, b.flight))
       returning bookings.map(_.id)
-      into ((bInfo, id) => Booking(id, bInfo._1, bInfo._2, bInfo._3, bInfo._4))
+      into ((bInfo, id) => database.BookingRow(id, bInfo._1, bInfo._2, bInfo._3, bInfo._4))
       ) += (bookedBy, status, bookedAt, flight)
   }
 
-  def upsert(booking: Booking): Future[Int] = db.run{
+  def upsert(booking: BookingRow): Future[Int] = db.run{
     bookings.insertOrUpdate(booking)
   }
 
@@ -37,9 +38,9 @@ class BookingsRepositoryImpl extends BookingsRepository {
   }
 }
 
-object BookingsRepositoryImpl {
+object BookingsRepositorySlick {
 
-  private[repositories] class BookingsTable(tag: Tag) extends Table[Booking](tag, Some("airport"), "bookings") {
+  private[repositories] class BookingsTable(tag: Tag) extends Table[BookingRow](tag, Some("airport"), "bookings") {
     def id = column[BookingId]("id", O.PrimaryKey, O.AutoInc)
 
     def bookedBy = column[PassengerId]("booked_by")
@@ -54,7 +55,7 @@ object BookingsRepositoryImpl {
 
     def flightKey = foreignKey("flight_fk", flight, flights)(_.id, onDelete = ForeignKeyAction.Cascade)
 
-    def * = (id, bookedBy, status, bookedAt, flight) <> (Booking.tupled, Booking.unapply)
+    def * = (id, bookedBy, status, bookedAt, flight) <> (BookingRow.tupled, BookingRow.unapply)
   }
 
   private[repositories] val bookings = TableQuery[BookingsTable]

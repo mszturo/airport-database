@@ -3,31 +3,32 @@ package airport.repositories
 import java.sql.Date
 
 import airport.database.AirportDatabase.db
-import airport.model.{AircraftId, CityId, Flight, FlightId}
-import airport.repositories.AircraftsRepositoryImpl.aircrafts
-import airport.repositories.CitiesRepositoryImpl.cities
-import airport.repositories.FlightsRepositoryImpl.flights
+import airport.model.database.FlightRow
+import airport.model.{AircraftId, CityId, FlightId, database}
+import airport.repositories.AircraftsRepositorySlick.aircrafts
+import airport.repositories.CitiesRepositorySlick.cities
+import airport.repositories.FlightsRepositorySlick.flights
 import slick.jdbc.PostgresProfile.api._
 
 import scala.concurrent.Future
 
-class FlightsRepositoryImpl extends FlightsRepository {
-  def getById(id: FlightId): Future[Option[Flight]] = db.run {
+class FlightsRepositorySlick extends FlightsRepository {
+  def getById(id: FlightId): Future[Option[FlightRow]] = db.run {
     flights.filter(_.id === id).result.headOption
   }
 
-  def getAll: Future[Seq[Flight]] = db.run {
+  def getAll: Future[Seq[FlightRow]] = db.run {
     flights.result
   }
 
-  def create(from: CityId, departureDate: Date, to: CityId, arrivalDate: Date, aircraft: AircraftId): Future[Flight] = db.run {
+  def create(from: CityId, departureDate: Date, to: CityId, arrivalDate: Date, aircraft: AircraftId): Future[FlightRow] = db.run {
     (flights.map(f => (f.fromCity, f.departureDate, f.toCity, f.arrivalDate, f.aircraft))
       returning flights.map(_.id)
-      into ((fInfo, id) => Flight(id, fInfo._1, fInfo._2, fInfo._3, fInfo._4, fInfo._5))
+      into ((fInfo, id) => database.FlightRow(id, fInfo._1, fInfo._2, fInfo._3, fInfo._4, fInfo._5))
       ) += (from, departureDate, to, arrivalDate, aircraft)
   }
 
-  def upsert(flight: Flight): Future[Int] = db.run {
+  def upsert(flight: FlightRow): Future[Int] = db.run {
     flights.insertOrUpdate(flight)
   }
 
@@ -36,9 +37,9 @@ class FlightsRepositoryImpl extends FlightsRepository {
   }
 }
 
-object FlightsRepositoryImpl {
+object FlightsRepositorySlick {
 
-  private[repositories] class FlightsTable(tag: Tag) extends Table[Flight](tag, Some("airport"), "flights") {
+  private[repositories] class FlightsTable(tag: Tag) extends Table[FlightRow](tag, Some("airport"), "flights") {
     def id = column[FlightId]("id", O.PrimaryKey, O.AutoInc)
 
     def fromCity = column[CityId]("from_city")
@@ -57,7 +58,7 @@ object FlightsRepositoryImpl {
 
     def aircraftKey = foreignKey("aircraft_fk", aircraft, aircrafts)(_.id, onDelete = ForeignKeyAction.NoAction)
 
-    def * = (id, fromCity, departureDate, toCity, arrivalDate, aircraft) <> (Flight.tupled, Flight.unapply)
+    def * = (id, fromCity, departureDate, toCity, arrivalDate, aircraft) <> (FlightRow.tupled, FlightRow.unapply)
   }
 
   private[repositories] val flights = TableQuery[FlightsTable]

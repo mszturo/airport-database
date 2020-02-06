@@ -6,8 +6,8 @@ import airport.model.BookingStatus.BookingStatus
 
 case class Booking(
   id: BookingId,
-  bookedBy: PassengerId,
+  bookedBy: Passenger,
   status: BookingStatus,
   bookedAt: Date,
-  flight: FlightId
+  flight: Flight
 )

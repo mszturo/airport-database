@@ -1,16 +1,18 @@
 package airport.repositories
 
-import airport.model.{AircraftModel, AircraftModelId}
+import airport.model.AircraftModelId
+import airport.model.database.AircraftModelRow
+
 import scala.concurrent.Future
 
 trait AircraftModelsRepository {
-  def getById(id: AircraftModelId): Future[Option[AircraftModel]]
+  def getById(id: AircraftModel): Future[Option[AircraftModelRow]]
 
-  def getAll: Future[Seq[AircraftModel]]
+  def getAll: Future[Seq[AircraftModelRow]]
 
-  def create(name: String, year: Short, capacity: Int): Future[AircraftModel]
+  def create(name: String, year: Short, capacity: Int): Future[AircraftModelRow]
 
-  def upsert(aircraftModel: AircraftModel): Future[Int]
+  def upsert(aircraftModel: AircraftModelRow): Future[Int]
 
-  def delete(id: AircraftModelId): Future[Int]
+  def delete(id: AircraftModel): Future[Int]
 }

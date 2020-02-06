@@ -4,8 +4,8 @@ import java.sql.Date
 
 case class Flight(
   id: FlightId,
-  from: CityId,
+  from: City,
   departureDate: Date,
-  to: CityId,
+  to: City,
   arrivalDate: Date,
-  aircraft: AircraftId)
+  aircraft: Aircraft)

@@ -1,19 +1,20 @@
 package airport.services
 
-import airport.model.{Aircraft, AircraftId, AircraftModelId}
+import airport.model.database.AircraftRow
+import airport.model.{AircraftId, AircraftModelId}
 import airport.repositories.AircraftsRepository
 
 import scala.concurrent.Future
 
 class AircraftsService(repo: AircraftsRepository) {
-  def getById(id: AircraftId): Future[Option[Aircraft]] = repo.getById(id)
+  def getById(id: AircraftId): Future[Option[AircraftRow]] = repo.getById(id)
 
-  def getAll: Future[Seq[Aircraft]] = repo.getAll
+  def getAll: Future[Seq[AircraftRow]] = repo.getAll
 
-  def create(operating: Boolean, model: AircraftModelId): Future[Aircraft] =
+  def create(operating: Boolean, model: AircraftModel): Future[AircraftRow] =
     repo.create(operating, model)
 
-  def upsert(aircraft: Aircraft): Future[Int] = repo.upsert(aircraft)
+  def upsert(aircraft: AircraftRow): Future[Int] = repo.upsert(aircraft)
 
   def delete(id: AircraftId): Future[Int] = repo.delete(id)
 }
